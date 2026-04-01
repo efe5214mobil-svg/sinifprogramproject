@@ -80,7 +80,7 @@ st.markdown("<div class='ana-baslik'>📅 Okul Ders Programı Asistanı</div>", 
 
 # Yönlendirme Butonu (Tıklandığında MEB Yönetmelik sitesine gider)
 st.markdown('<div class="yuzen-buton-alani">', unsafe_allow_html=True)
-st.link_button("🏛️ MEB Yönetmelik", "https://meb-yonetmelik.streamlit.app/")
+st.link_button("🏛️ MEB Yönetmelik", "https://mebyonetmelik-asistani.streamlit.app/")
 st.markdown('</div>', unsafe_allow_html=True)
 
 # 💡 Hızlı Sorular (Öneri Kartları)
