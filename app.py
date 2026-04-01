@@ -13,7 +13,7 @@ load_dotenv()
 @st.cache_resource
 def veri_tabanini_yukle():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    return Chroma(persist_directory="okul_asistani_gpt_db", embedding_function=embeddings)
+    return Chroma(persist_directory="sinif_programi_vektor", embedding_function=embeddings)
 
 vektor_tabani = veri_tabanini_yukle()
 
