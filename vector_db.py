@@ -5,7 +5,7 @@ def load_vector_db():
     embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
     db = Chroma(
-        persist_directory="okul_asistani_gpt_db",
+        persist_directory="sinif_programi_vektor",
         embedding_function=embeddings
     )
 
