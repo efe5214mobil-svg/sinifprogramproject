@@ -1,40 +1,36 @@
 from groq import Groq
 import os
+import pandas as pd # Excel okumak için
 
-def okul_asistani_sorgula(soru, vector_db):
+def okul_asistani_sorgula(soru, dosya_yolu="ders_programi.xlsx"):
     try:
-        api_key = os.getenv("GROQ_API_KEY")
-        client = Groq(api_key=api_key)
-
-        # Sınıf araması için soruyu temizle (9-A -> 9A)
-        arama_normal = soru.upper().replace("-", "").replace(" ", "")
+        client = Groq(api_key=os.getenv("GROQ_API_KEY"))
         
-        docs = vector_db.similarity_search(arama_normal, k=5)
-        baglam = "\n\n".join([doc.page_content for doc in docs])
+        # 1. Excel'den veriyi metne dönüştür (En Garanti Yol)
+        # Eğer PDF kullanacaksan burada pdf_plumber gibi bir kütüphane gerekir.
+        df = pd.read_excel(dosya_yolu)
+        program_metni = df.to_string() # Tüm tabloyu yazıya döküyoruz
         
-        chat_completion = client.chat.completions.create(
+        system_msg = f"""Sen bir okul asistanısın. 
+        Aşağıdaki ham ders programı verisini kullanarak tablo oluştur.
+        
+        DERS PROGRAMI VERİSİ:
+        {program_metni}
+        
+        KURALLAR:
+        1. Sınıf isimleri 9A, 9B, 10C formatındadır.
+        2. Yanıtı MUTLAKA Markdown TABLO olarak ver.
+        3. Bilgi bulamazsan uydurma.
+        """
+        
+        yanit = client.chat.completions.create(
             messages=[
-                {
-                    "role": "system", 
-                    "content": f"""Sen bir okul ders programı asistanısın. 
-                    PDF verisindeki sınıflar '9A', '9B', '10C' gibi bitişik yazılmıştır.
-                    
-                    ELİNDEKİ VERİ:
-                    {baglam}
-                    
-                    CEVAPLAMA KURALLARI:
-                    1. Kullanıcı 9-A dese bile sen verideki '9A' bilgisine odaklan.
-                    2. Programı SADECE tablo şeklinde ver.
-                    3. Tablo Sütunları: | Sıra/Saat | Ders Adı | Öğretmen | Sınıf |
-                    4. Eğer dökümanda o gün/saat için ders yoksa 'Ders Boş' veya 'Bilgi Yok' de.
-                    5. Sadece sana verilen bağlama sadık kal, dışarıdan bilgi ekleme."""
-                },
+                {"role": "system", "content": system_msg},
                 {"role": "user", "content": soru}
             ],
             model="llama-3.3-70b-versatile",
-            temperature=0.1,
+            temperature=0
         )
-        
-        return chat_completion.choices[0].message.content, [d.page_content[:100] for d in docs]
+        return yanit.choices[0].message.content
     except Exception as e:
-        return f"❌ Hata: {str(e)}", []
+        return f"Hata: {str(e)}"
