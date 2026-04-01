@@ -6,30 +6,28 @@ def okul_asistani_sorgula(soru, vector_db):
         api_key = os.getenv("GROQ_API_KEY")
         client = Groq(api_key=api_key)
 
-        # 1. Kullanıcın sorusundaki sınıf ismini normalize et (9-A -> 9A gibi)
-        # Bu, arama motorunun doğru dökümanı bulmasına yardımcı olur.
-        arama_sorusu = soru.replace("-", "").replace(" ", "")
-
-        # 2. Vektör DB'den en alakalı dökümanları çek
-        docs = vector_db.similarity_search(arama_sorusu, k=4)
+        # Sınıf araması için soruyu temizle (9-A -> 9A)
+        arama_normal = soru.upper().replace("-", "").replace(" ", "")
+        
+        docs = vector_db.similarity_search(arama_normal, k=5)
         baglam = "\n\n".join([doc.page_content for doc in docs])
         
-        # 3. Groq'a Sınıf Formatı ve Tablo Talimatı Ver
         chat_completion = client.chat.completions.create(
             messages=[
                 {
                     "role": "system", 
                     "content": f"""Sen bir okul ders programı asistanısın. 
-                    Veritabanındaki sınıf isimleri '9A', '9B', '10C' gibi bitişik yazılmaktadır.
+                    PDF verisindeki sınıflar '9A', '9B', '10C' gibi bitişik yazılmıştır.
                     
-                    SADECE şu verilere göre cevap ver: {baglam}
+                    ELİNDEKİ VERİ:
+                    {baglam}
                     
-                    KURALLAR:
-                    1. Cevap verirken sınıf ismini kullanıcının sorduğu gibi değil, verideki gibi (örn: 9A) kullan.
-                    2. Program bilgilerini MUTLAKA Markdown TABLO formatında sun.
-                    3. Tablo sütunları: | Saat/Sıra | Ders | Öğretmen | Yer |
-                    4. Eğer dökümanda o sınıfa ait bilgi yoksa, 'Üzgünüm, {soru} için program verisi bulunamadı' de.
-                    5. Gereksiz yorum yapma, doğrudan tabloyu paylaş."""
+                    CEVAPLAMA KURALLARI:
+                    1. Kullanıcı 9-A dese bile sen verideki '9A' bilgisine odaklan.
+                    2. Programı SADECE tablo şeklinde ver.
+                    3. Tablo Sütunları: | Sıra/Saat | Ders Adı | Öğretmen | Sınıf |
+                    4. Eğer dökümanda o gün/saat için ders yoksa 'Ders Boş' veya 'Bilgi Yok' de.
+                    5. Sadece sana verilen bağlama sadık kal, dışarıdan bilgi ekleme."""
                 },
                 {"role": "user", "content": soru}
             ],
@@ -37,7 +35,6 @@ def okul_asistani_sorgula(soru, vector_db):
             temperature=0.1,
         )
         
-        cevap = chat_completion.choices[0].message.content
-        return cevap, [d.page_content[:100] for d in docs]
+        return chat_completion.choices[0].message.content, [d.page_content[:100] for d in docs]
     except Exception as e:
-        return f"❌ Bir hata oluştu: {str(e)}", []
+        return f"❌ Hata: {str(e)}", []
