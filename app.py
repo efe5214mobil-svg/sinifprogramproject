@@ -7,92 +7,106 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from rag import okul_asistani_sorgula
 
-# 🔐 Ayarlar
+# 🔐 Başlatma
 load_dotenv()
 
 @st.cache_resource
 def veri_tabanini_yukle():
-    gomme_modeli = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
-    return Chroma(persist_directory="okul_asistani_gpt_db", embedding_function=gomme_modeli)
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    return Chroma(persist_directory="okul_asistani_gpt_db", embedding_function=embeddings)
 
 vektor_tabani = veri_tabanini_yukle()
 
-# 🎨 Sayfa Yapılandırması
-st.set_page_config(page_title="Okul Asistanı", page_icon="📅", layout="centered")
+# 🛡️ GELİŞMİŞ ÇELİK ZIRH SÜZGECİ
+def suzgec_kontrolu(metin):
+    # Karakter hilelerini temizle (1=i, 4=a vb.)
+    harita = {'1':'i', '0':'o', '3':'e', '4':'a', '5':'s', '7':'t', '8':'b', '@':'a', '$':'s'}
+    temiz = metin.lower()
+    for eski, yeni in harita.items():
+        temiz = temiz.replace(eski, yeni)
+    
+    # Boşlukları ve özel karakterleri silerek sıkıştır
+    sıkı_metin = re.sub(r'[^a-z0-9çşğüöı]', '', temiz)
+    
+    # Kapsamlı Yasaklı Listesi
+    yasakli = [
+        "oc", "aq", "amk", "amq", "pic", "got", "sik", "amc", "yarrak", "orospu", 
+        "seks", "porno", "gay", "lezbiyen", "lgbt", "erdogan", "tayyip", "siyaset", 
+        "parti", "ataturk", "teror", "darbe", "bebegim", "askim"
+    ]
+    return any(kelime in sıkı_metin for kelime in yasakli)
 
-# 🖌️ MODERN CSS (Mavi Buton ve Beyaz Yazı Dahil)
+# 🖌️ TASARIM (Mavi-Beyaz Temalı)
+st.set_page_config(page_title="Okul Asistanı GPT", layout="centered")
+
 st.markdown("""
 <style>
     .stApp { font-family: 'Inter', sans-serif; }
-    .ana-baslik { font-size: 2.5rem; font-weight: 800; text-align: center; margin-bottom: 1.5rem; }
+    .ana-baslik { font-size: 2.5rem; font-weight: 800; text-align: center; color: #FFFFFF; }
     
-    /* Yüzen Mavi Buton Ayarları */
+    /* Mavi-Beyaz Yönlendirme Butonu */
     .yuzen-buton-alani {
         position: fixed;
         bottom: 85px; 
-        right: 10%; 
-        z-index: 999999;
+        right: 8%; 
+        z-index: 9999;
     }
     .stLinkButton a {
-        background-color: #1E90FF !important; /* Mavimsi */
-        color: white !important;               /* Beyaz yazı */
-        border-radius: 25px !important;
-        padding: 0.6rem 1.5rem !important;
+        background-color: #1E90FF !important; /* Mavi Arka Plan */
+        color: white !important;               /* Beyaz Yazı */
+        border-radius: 30px !important;
+        padding: 0.8rem 1.8rem !important;
         font-weight: 700 !important;
-        border: 2px solid white !important;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+        border: 2px solid #FFFFFF !important;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
     }
 
-    /* Öneri Kartları */
     .kategori-kutusu {
-        background-color: rgba(128, 128, 128, 0.1);
-        border-radius: 15px;
-        padding: 18px;
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 15px;
         border-top: 4px solid #1E90FF;
-        height: 100%;
         margin-bottom: 10px;
     }
-    .kategori-basligi { font-weight: bold; color: #1E90FF; margin-bottom: 8px; }
+    .kategori-basligi { font-weight: bold; color: #1E90FF; }
 </style>
 """, unsafe_allow_html=True)
-
-# 🛡️ GÜVENLİK SÜZGECİ
-def suzgec_kontrolu(metin):
-    temiz = re.sub(r'[^a-z0-9çşğüöı]', '', metin.lower())
-    yasakli = ["oc", "aq", "amk", "sik", "piç"] 
-    return any(y in temiz for y in yasakli)
 
 # --- ARAYÜZ ---
 st.markdown("<div class='ana-baslik'>📅 Okul Ders Programı Asistanı</div>", unsafe_allow_html=True)
 
-# Mavi Buton
+# Yönlendirme Butonu (Tıklandığında MEB Yönetmelik sitesine gider)
 st.markdown('<div class="yuzen-buton-alani">', unsafe_allow_html=True)
 st.link_button("🏛️ MEB Yönetmelik", "https://meb-yonetmelik.streamlit.app/")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 💡 Hızlı Sorular
-s1, s2, s3 = st.columns(3)
-with s1:
-    st.markdown('<div class="kategori-kutusu"><div class="kategori-basligi">🔍 Sınıflar</div>9-A Pazartesi dersleri neler?</div>', unsafe_allow_html=True)
-with s2:
-    st.markdown('<div class="kategori-kutusu"><div class="kategori-basligi">👨‍🏫 Hocalar</div>U.TRK dersi ne zaman?</div>', unsafe_allow_html=True)
-with s3:
-    st.markdown('<div class="kategori-kutusu"><div class="kategori-basligi">⏰ Saatler</div>İlk ders kaçta başlıyor?</div>', unsafe_allow_html=True)
+# 💡 Hızlı Sorular (Öneri Kartları)
+c1, c2, c3 = st.columns(3)
+with c1: st.markdown('<div class="kategori-kutusu"><div class="kategori-basligi">🔍 Sınıflar</div>9-A Pazartesi dersleri neler?</div>', unsafe_allow_html=True)
+with c2: st.markdown('<div class="kategori-kutusu"><div class="kategori-basligi">👨‍🏫 Hocalar</div>U.TRK dersi hangi saatte?</div>', unsafe_allow_html=True)
+with c3: st.markdown('<div class="kategori-kutusu"><div class="kategori-basligi">📚 Dersler</div>Bilişim dersi hangi gün?</div>', unsafe_allow_html=True)
 
-if "chat_history" not in st.session_state: st.session_state.chat_history = []
+st.markdown("---")
 
-for m in st.session_state.chat_history:
+if "messages" not in st.session_state: st.session_state.messages = []
+
+for m in st.session_state.messages:
     with st.chat_message(m["role"]): st.markdown(m["content"])
 
-if prompt := st.chat_input("Sorunuzu sorun..."):
-    if suzgec_kontrolu(prompt):
-        st.error("⚠️ Uygunsuz içerik engellendi.")
+if girdi := st.chat_input("Ders programı hakkında bir soru sorun..."):
+    if suzgec_kontrolu(girdi):
+        msg = st.error("⚠️ Güvenlik Süzgeci: Lütfen uygun bir dil kullanın.")
+        time.sleep(2); msg.empty()
     else:
-        st.session_state.chat_history.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
+        st.session_state.messages.append({"role": "user", "content": girdi})
+        with st.chat_message("user"): st.markdown(girdi)
 
         with st.chat_message("assistant"):
-            with st.spinner("İnceleniyor..."):
-                cevap, kaynaklar = okul_asistani_sorgula(prompt, vektor_tabani)
+            with st.spinner("⏳ İnceleniyor..."):
+                cevap, kaynaklar = okul_asistani_sorgula(girdi, vektor_tabani)
                 st.markdown(cevap)
-                st.session_state.chat_history.append({"role": "assistant", "content": cevap})
+                if kaynaklar:
+                    with st.expander("📌 Kaynak Bilgi"):
+                        for k in kaynaklar: st.caption(k)
+                st.session_state.messages.append({"role": "assistant", "content": cevap})
+                st.rerun()
