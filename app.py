@@ -23,7 +23,7 @@ def veri_tabanini_yukle():
 
 vektor_tabani = veri_tabanini_yukle()
 
-# 🛡️ GÜVENLİK SÜZGECİ
+# 🛡️ ÇELİK ZIRH SÜZGECİ
 def suzgec_kontrolu(metin):
     harita = {'1':'i', '0':'o', '3':'e', '4':'a', '5':'s', '7':'t', '8':'b', '@':'a', '$':'s'}
     temiz = metin.lower()
@@ -32,15 +32,11 @@ def suzgec_kontrolu(metin):
     yasakli = ["oc", "aq", "amk", "sik", "orospu", "teror", "siyaset", "askim", "bebegim"]
     return any(k in sıkı for k in yasakli)
 
-# 🎨 TASARIM (Görseldeki Stil ile Aynı)
+# 🎨 CSS TASARIMI (Mavi Buton ve Genel Stil)
 st.set_page_config(page_title="Okul Asistanı GPT", layout="centered")
-
 st.markdown("""
 <style>
     .stApp { background-color: #0E1117; }
-    .ana-baslik { font-size: 2.2rem; font-weight: 800; text-align: center; color: white; margin-bottom: 30px; }
-    
-    /* Görseldeki Buton Stili */
     .yuzen-buton { position: fixed; bottom: 80px; right: 20px; z-index: 999; }
     .stLinkButton a {
         background-color: #1E90FF !important;
@@ -49,74 +45,70 @@ st.markdown("""
         border: 2px solid white !important;
         font-weight: bold !important;
         padding: 0.5rem 1.5rem !important;
+        text-decoration: none !important;
     }
-
-    /* Görseldeki Kart Stili */
-    .kart-konteynir {
-        background-color: #161922;
-        border-radius: 15px;
-        padding: 20px;
-        border-top: 4px solid #FF4B4B; /* Mavi yapmak istersen #1E90FF yap */
-        height: 180px;
-        margin-bottom: 10px;
-    }
-    .kart-baslik { color: #FF4B4B; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; display: flex; align-items: center; }
-    .kart-icerik { color: #808495; font-size: 0.9rem; line-height: 1.6; }
 </style>
 """, unsafe_allow_html=True)
 
-# Başlık ve Simge
-st.markdown("<div class='ana-baslik'>🏛️ Okul Ders Programı Asistanı</div>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: white;'>🏛️ Okul Ders Programı Asistanı</h1>", unsafe_allow_html=True)
 
-# Yüzen Buton (MEB Yönetmelik)
+# 🏛️ Sağ Alt Köşedeki Mavi Buton
 st.markdown('<div class="yuzen-buton">', unsafe_allow_html=True)
 st.link_button("🏛️ MEB Yönetmelik", "https://meb-yonetmelik.streamlit.app/")
 st.markdown('</div>', unsafe_allow_html=True)
 
-# 💡 Hızlı Sorular (Görseldeki Tasarım)
+# 💡 HIZLI SORULAR (ŞIK KARTLAR)
 st.markdown("### 💡 Hızlı Sorular")
-c1, c2, c3 = st.columns(3)
 
-with c1:
-    st.markdown("""
-    <div class='kart-konteynir'>
-        <div class='kart-baslik'>🔍 Sınıf Programı</div>
-        <div class='kart-icerik'>• 9-A Pazartesi?<br>• 11-B Cuma dersleri?<br>• 10-C Salı ilk ders?</div>
+# Kartlar için ortak stil fonksiyonu
+def soru_karti(renk, baslik, icerik):
+    return f"""
+    <div style="
+        background-color: #161922;
+        border-radius: 15px;
+        padding: 20px;
+        border-top: 5px solid {renk};
+        height: 180px;
+        margin-bottom: 10px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    ">
+        <div style="color: {renk}; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">{baslik}</div>
+        <div style="color: #808495; font-size: 0.9rem; line-height: 1.6;">{icerik}</div>
     </div>
-    """, unsafe_allow_html=True)
+    """
 
-with c2:
-    st.markdown("""
-    <div class='kart-konteynir' style='border-top-color: #FF8C00;'>
-        <div class='kart-baslik' style='color: #FF8C00;'>👨‍🏫 Öğretmenler</div>
-        <div class='kart-icerik'>• U.TRK Salı nerede?<br>• Matematik hocası?<br>• Ahmet Yılmaz ders?</div>
-    </div>
-    """, unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
 
-with c3:
-    st.markdown("""
-    <div class='kart-konteynir' style='border-top-color: #1E90FF;'>
-        <div class='kart-baslik' style='color: #1E90FF;'>📚 Okul Bilgisi</div>
-        <div class='kart-icerik'>• Öğle arası kaçta?<br>• Bilişim sınıfı neresi?<br>• Seçmeli ders günü?</div>
-    </div>
-    """, unsafe_allow_html=True)
+with col1:
+    st.markdown(soru_karti("#FF4B4B", "🔍 Sınıf Programı", "• 9-A Pazartesi?<br>• 11-B Cuma dersleri?<br>• 10-C Salı ilk ders?"), unsafe_allow_html=True)
 
-st.markdown("---")
+with col2:
+    st.markdown(soru_karti("#FF8C00", "👨‍🏫 Öğretmenler", "• U.TRK Salı nerede?<br>• Matematik hocası?<br>• Ahmet Yılmaz ders?"), unsafe_allow_html=True)
 
-# Sohbet Akışı
+with col3:
+    st.markdown(soru_karti("#1E90FF", "📚 Okul Bilgisi", "• Öğle arası kaçta?<br>• Bilişim sınıfı neresi?<br>• Seçmeli ders günü?"), unsafe_allow_html=True)
+
+st.markdown("<br><hr>", unsafe_allow_html=True)
+
+# 💬 SOHBET AKIŞI
 if "messages" not in st.session_state: st.session_state.messages = []
+
 for m in st.session_state.messages:
     with st.chat_message(m["role"]): st.markdown(m["content"])
 
 if girdi := st.chat_input("Ders programı hakkında bir soru sorun..."):
     if suzgec_kontrolu(girdi):
-        st.error("⚠️ Uygunsuz içerik engellendi.")
+        st.error("⚠️ Güvenlik Süzgeci: Uygunsuz dil algılandı.")
     else:
         st.session_state.messages.append({"role": "user", "content": girdi})
         with st.chat_message("user"): st.markdown(girdi)
+        
         with st.chat_message("assistant"):
-            with st.spinner("⏳ Tablo hazırlanıyor..."):
+            with st.spinner("⏳ Program inceleniyor..."):
                 cevap, kaynaklar = okul_asistani_sorgula(girdi, vektor_tabani)
                 st.markdown(cevap)
+                if kaynaklar:
+                    with st.expander("📌 Kaynak Bilgi"):
+                        for k in kaynaklar: st.caption(k)
                 st.session_state.messages.append({"role": "assistant", "content": cevap})
                 st.rerun()
